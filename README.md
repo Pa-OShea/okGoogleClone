@@ -1,2 +1,4 @@
 # okGoogleClone
-app with background mic, listening for a keyphrase. then uses text to speech engine
+App with background mic that using pocketsphinx to listen for a keyphrase "oh mighty computer". 
+Then uses googles text to speech engine to display what you said in a textview
+Can also ask simple questions. "Ehat is time is it" and "What date is it"
