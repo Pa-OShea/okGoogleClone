@@ -2,7 +2,6 @@ package com.p14osheagmail.okgoogleclone;
 
 import android.content.Intent;
 import android.os.Build;
-import android.provider.AlarmClock;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,17 +21,20 @@ public class MainActivity extends AppCompatActivity implements SpeechRecognizerM
     private TextToSpeech tts;
     private SpeechRecognizerManager mSpeechRecognizerManager;
     private int MY_DATA_CHECK_CODE = 0;
+    TextView voice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        s = (TextView) findViewById(R.id.hello);
         setmSpeechRecognizerManager();
+
+        voice = findViewById(R.id.voice);
 
         Intent checkTTSIntent = new Intent();
         checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
         startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
     }
 
     void setmSpeechRecognizerManager(){
@@ -89,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements SpeechRecognizerM
         Log.e("Speech",""+text);
         String[] speech = text.split(" ");
 
+        voice.setText(text);
+
         if(text.contains("what") && text.contains("time")){
             SimpleDateFormat digitalTime = new SimpleDateFormat("HH:mm");
             SimpleDateFormat analogTime = new SimpleDateFormat("HH:mm a");
@@ -101,39 +105,6 @@ public class MainActivity extends AppCompatActivity implements SpeechRecognizerM
             SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
             String formattedDate = df.format(c.getTime());
             speak(formattedDate);
-
-        }
-
-        if(text.contains("weather")){
-            speak("it is probably raining");
-        }
-
-        if(text.contains("play") && text.contains("game")){
-            //for the memory game
-        }
-
-        if(text.contains("play") && text.contains("music")){
-            //for music
-        }
-
-        if(text.contains("lights")) {
-            if (text.contains("turn on")) {
-                speak("lights turned on");
-            } else if (text.contains("turn off")) {
-                speak("lights turned off");
-            }
-        }
-
-        if(text.contains("wake me up at") || text.contains("alarm")){
-            speak(speech[speech.length-1]);
-            String[] time = speech[speech.length-1].split(":");
-            String hour = time[0];
-            String minutes = time[1];
-            Intent i = new Intent(AlarmClock.ACTION_SET_ALARM);
-            i.putExtra(AlarmClock.EXTRA_HOUR, Integer.valueOf(hour));
-            i.putExtra(AlarmClock.EXTRA_MINUTES, Integer.valueOf(minutes));
-            startActivity(i);
-            speak("Setting alarm to ring at " + hour + ":" + minutes);
         }
 
         if(text.contains("thank you")){
@@ -143,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements SpeechRecognizerM
 
     @Override
     public void OnResult(ArrayList<String> commands) {
+        //mSpeechRecognizerManager.destroy();
         StringBuilder text = new StringBuilder("");
         for(String command:commands) {
             text.append(command).append(" ");

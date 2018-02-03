@@ -1,5 +1,6 @@
 package com.p14osheagmail.okgoogleclone;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
+import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
@@ -26,7 +28,7 @@ public class SpeechRecognizerManager {
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
     /* Keyword we are looking for to activate menu */
-    private static final String KEYPHRASE = "ok light";
+    private static final String KEYPHRASE = "oh mighty computer";
     private edu.cmu.pocketsphinx.SpeechRecognizer mPocketSphinxRecognizer;
     private static final String TAG = SpeechRecognizerManager.class.getSimpleName();
     protected Intent mSpeechRecognizerIntent;
@@ -42,7 +44,24 @@ public class SpeechRecognizerManager {
 
     }
 
+    public SpeechRecognizer getmPocketSphinxRecognizer() {
+        return mPocketSphinxRecognizer;
+    }
 
+    public static String getKwsSearch() {
+        return KWS_SEARCH;
+    }
+
+    public void stop(){
+        mPocketSphinxRecognizer.cancel();
+    }
+
+    public void start(){
+        mPocketSphinxRecognizer.startListening(KWS_SEARCH);
+    }
+
+
+    @SuppressLint("StaticFieldLeak")
     private void initPockerSphinx() {
 
         new AsyncTask<Void, Void, Exception>() {
@@ -72,6 +91,7 @@ public class SpeechRecognizerManager {
                     // Create keyword-activation search.
                     mPocketSphinxRecognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
                 } catch (IOException e) {
+                    System.err.print(e.getMessage());
                     return e;
                 }
                 return null;
@@ -79,6 +99,7 @@ public class SpeechRecognizerManager {
 
             @Override
             protected void onPostExecute(Exception result) {
+                //System.err.println("Something is fucking wrong\n" + result.getMessage());
                 if (result != null) {
                     Toast.makeText(mContext, "Failed to init mPocketSphinxRecognizer ", Toast.LENGTH_SHORT).show();
                 } else {
@@ -92,13 +113,9 @@ public class SpeechRecognizerManager {
     private void initGoogleSpeechRecognizer() {
 
         mGoogleSpeechRecognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(mContext);
-
         mGoogleSpeechRecognizer.setRecognitionListener(new GoogleRecognitionListener());
-
         mSpeechRecognizerIntent = new Intent( RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-
-        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         mSpeechRecognizerIntent.putExtra( RecognizerIntent. EXTRA_CONFIDENCE_SCORES, true);
     }
 
@@ -110,7 +127,6 @@ public class SpeechRecognizerManager {
             mPocketSphinxRecognizer = null;
         }
 
-
         if (mGoogleSpeechRecognizer != null) {
             mGoogleSpeechRecognizer.cancel();
             mGoogleSpeechRecognizer.destroy();
@@ -120,9 +136,7 @@ public class SpeechRecognizerManager {
     }
 
     private void restartSearch(String searchName) {
-
         mPocketSphinxRecognizer.stop();
-
         mPocketSphinxRecognizer.startListening(searchName);
 
     }
@@ -142,26 +156,23 @@ public class SpeechRecognizerManager {
          */
         @Override
         public void onPartialResult(Hypothesis hypothesis) {
-            if (hypothesis == null)
-            {
+            if (hypothesis == null){
                 Log.d(TAG,"null");
-
-
                 return;
-
             }
             String text = hypothesis.getHypstr();
-            Log.d(TAG,text);
+            Log.d(TAG, "What you said " + text);
             if (text.equals(KEYPHRASE)) {
-                mGoogleSpeechRecognizer.startListening(mSpeechRecognizerIntent);
                 mPocketSphinxRecognizer.cancel();
-                Toast.makeText(mContext, "You said: "+text, Toast.LENGTH_SHORT).show();
-
+                mGoogleSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                //Toast.makeText(mContext, "You said: "+text, Toast.LENGTH_SHORT).show();
             }
+            hypothesis.delete();
         }
 
         @Override
         public void onResult(Hypothesis hypothesis) {
+
         }
 
 
@@ -238,9 +249,17 @@ public class SpeechRecognizerManager {
                 if (mOnResultListener!=null){
                     mOnResultListener.OnResult(heard);
                 }
+                heard.clear();
 
             }
 
+            /*try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
+            assert results != null;
+            results.clear();
             mPocketSphinxRecognizer.startListening(KWS_SEARCH);
 
 
